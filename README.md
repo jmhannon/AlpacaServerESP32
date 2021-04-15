@@ -17,7 +17,10 @@ To use, simply let your class inherit the relevant AscomDevice-derived class (e.
 sure to implement all pure virtual methods:
 aGet* should call _alpacaServer->respond(value, <error-code>, <error-message>)
 aGet* should call _alpacaServer->respond(nullptr, <error-code>, <error-message>) after reading parameters using _alpacaServer->getParam("<param-name>")
-   
+
+A working dual focuser controller project can be found here:
+https://github.com/elenhinan/YetAnotherFocuser
+
 Minimum setup:
 
 **platform.io**
