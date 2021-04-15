@@ -1,0 +1,25 @@
+{
+    "name": "ESPAscomAlpacaServer",
+    "version": "0.1.0",
+    "description": "A server for ASCOM's ALPACA REST API, for connecting astronomy equipment to a computer via wifi",
+    "keywords": "ascom, alpaca, ascom_alpaca",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.comelenhinan/ESPAscomAlpacaServer.git"
+    },
+    "authors":
+    [
+      {
+        "name": "Njål Brekke",
+        "email": "njal@myon.no",
+        "url": "https://www.myon.no",
+        "maintainer": true
+      }
+    ],
+    "license": "CC-BY-SA-4.0",
+    "dependencies": {
+    },
+    "frameworks": "arduino",
+    "platforms": "espressif32"
+  }
