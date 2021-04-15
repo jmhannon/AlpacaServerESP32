@@ -6,15 +6,19 @@ for making this was to have a compact, easily adaptable library for interfacing 
 Auto discovery by Ascom is working, and more than one device can be connected to the server.
 As of now, only focuser is implemented, but adding other classes is very simple and I'll do so in the future.
 
+Be sure to check out Ascom API documentation to be sure you handle values and parameters correctly, and
+return error responses as needed.
+
+For now, a webpage for configuring the server and devices is missing, and will be added later.
+
+For debugging set AscomServer.debug = true, after you have called Serial.begin();
+
 To use, simply let your class inherit the relevant AscomDevice-derived class (e.g. AscomFocuser), and make
 sure to implement all pure virtual methods:
 aGet* should call _alpacaServer->respond(value, <error-code>, <error-message>)
 aGet* should call _alpacaServer->respond(nullptr, <error-code>, <error-message>) after reading parameters using _alpacaServer->getParam("<param-name>")
-
-Be sure to check out Ascom API documentation to be sure you handle values and parameters correctly, and
-return error responses as needed.
-
-For debugging set AscomServer.debug = true, after you have called Serial.begin();
+   
+Minimum setup:
 
 **platform.io**
 ```
