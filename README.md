@@ -9,7 +9,9 @@ As of now, only focuser is implemented, but adding other classes is very simple 
 Be sure to check out Ascom API documentation to be sure you handle values and parameters correctly, and
 return error responses as needed.
 
-For now, a webpage for configuring the server and devices is missing, and will be added later.
+A webpage for configuring the server be found at <IP-addr>/setup , and a setup page for each connected device will be dynamically created and presented as tabs. Saving to flash memory is supported, with settings being loaded at boot. Your class should implement aReadJson and aWriteJson to load and save settings to and from the web-interface and the flash memory.
+   
+<img src="https://github.com/elenhinan/ESPAscomAlpacaServer/blob/master/pics/server.png?raw=true" width="400">
 
 For debugging set AscomServer.debug = true, after you have called Serial.begin();
 
