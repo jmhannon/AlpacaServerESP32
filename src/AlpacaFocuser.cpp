@@ -17,6 +17,6 @@ void AlpacaFocuser::registerCallbacks()
     this->createCallBack(LHF(aPutMove), HTTP_PUT, "move");
 }
 
-void AlpacaFocuser::aGetInterfaceVersion() {
-    _alpacaServer->respond(ALPACA_FOCUSER_INTERFACE_VERSION);
+void AlpacaFocuser::aGetInterfaceVersion(AsyncWebServerRequest *request) {
+    _alpacaServer->respond(request, ALPACA_FOCUSER_INTERFACE_VERSION);
 };

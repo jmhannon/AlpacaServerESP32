@@ -3,6 +3,8 @@
 
 #define DEBUGSTREAM if(debug) debugstream
 
+#define SETTINGS_FILE "/settings.json"
+
 AlpacaServer::AlpacaServer(const char* name)
 {
     // Get unique ID from wifi macadr.
@@ -17,6 +19,11 @@ AlpacaServer::AlpacaServer(const char* name)
 // initialize alpaca server
 void AlpacaServer::begin(uint16_t udp_port, uint16_t tcp_port)
 {
+    // Setup filesystem
+    if(!SPIFFS.begin()) {
+        Serial.println(F("# Error mounting SPIFFS!"));
+    }
+
     // setup ports
     _portUDP = udp_port;
     _portTCP = tcp_port;
@@ -28,13 +35,14 @@ void AlpacaServer::begin(uint16_t udp_port, uint16_t tcp_port)
 
     DEBUGSTREAM->print("# Ascom Alpaca server port (TCP): ");
     DEBUGSTREAM->println(_portTCP);
-    _serverTCP.begin(_portTCP);
+    _serverTCP = new AsyncWebServer(_portTCP);
+    _serverTCP->begin();
 
-    _serverTCP.onNotFound([this]() {
-        String url = this->_serverTCP.uri();
-        this->_serverTCP.send(400, "text/plain", "Not found: '" + url + "'");
+    _serverTCP->onNotFound([this](AsyncWebServerRequest *request) {
+        String url = request->url();
+        request->send(400, "text/plain", "Not found: '" + url + "'");
     });
-    
+
     _registerCallbacks();
 }
 
@@ -57,33 +65,56 @@ void AlpacaServer::addDevice(AlpacaDevice *device)
     }
     // and set device number
     _device[_n_devices++] = device;
-    device->setDeviceNumber(device_number);
     device->setAlpacaServer(this);
+    device->setDeviceNumber(device_number);
     device->registerCallbacks();
 }
 
 // register callbacks for REST API
 void AlpacaServer::_registerCallbacks()
 {
+    // setup rest api
     DEBUGSTREAM->println(F("# Register handler for \"/management/apiversions\" to getApiVersions"));
-    _serverTCP.on("/management/apiversions", HTTP_GET, LHF(_getApiVersions));
+    _serverTCP->on("/management/apiversions", HTTP_GET, LHF(_getApiVersions));
     DEBUGSTREAM->println(F("# Register handler for \"/management/v1/description\" to getDescription"));
-    _serverTCP.on("/management/v1/description", HTTP_GET, LHF(_getDescription));
+    _serverTCP->on("/management/v1/description", HTTP_GET, LHF(_getDescription));
     DEBUGSTREAM->println(F("# Register handler for \"/management/v1/configureddevices\" to getConfiguredDevices"));
-    _serverTCP.on("/management/v1/configureddevices", HTTP_GET, LHF(_getConfiguredDevices));
+    _serverTCP->on("/management/v1/configureddevices", HTTP_GET, LHF(_getConfiguredDevices));
+
+    // setup webpages
+    _serverTCP->serveStatic("/setup", SPIFFS, "/www/setup.html");
+    _serverTCP->serveStatic(SETTINGS_FILE, SPIFFS, SETTINGS_FILE);
+    _serverTCP->serveStatic("/js", SPIFFS, "/www/js/").setCacheControl("max-age=3600");
+    _serverTCP->serveStatic("/css", SPIFFS, "/www/css/").setCacheControl("max-age=3600");
+
+    DEBUGSTREAM->println(F("# Register handler for \"/jsondata\" to readJson"));
+    _serverTCP->on("/jsondata", HTTP_GET, LHF(_getJsondata));
+    _serverTCP->on("/links", HTTP_GET, LHF(_getLinks));
+    AsyncCallbackJsonWebHandler* jsonhandler = new AsyncCallbackJsonWebHandler("/jsondata", [this](AsyncWebServerRequest *request, JsonVariant& json){
+       JsonObject jsonObj = json.as<JsonObject>();
+       this->_readJson(jsonObj);
+       request->send(200, F("application/json"), F("{\"recieved\":\"true\"}"));
+    });
+    _serverTCP->addHandler(jsonhandler);
+    _serverTCP->on("/save_settings", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        if (this->saveSettings())
+            request->send(200,"application/json",F("{\"saved\":true}"));
+        else
+            request->send(400,"application/json",F("{\"saved\":false}"));
+    });
 }
 
-void AlpacaServer::_getApiVersions(){
-    respond(ALPACA_API_VERSIONS);
+void AlpacaServer::_getApiVersions(AsyncWebServerRequest *request){
+    respond(request, ALPACA_API_VERSIONS);
 }
 
-void AlpacaServer::_getDescription(){
-    respond(ALPACA_DESCRIPTION);
-    //_serverTCP.send(200,"text/plain", ALPACA_DESCRIPTION);
+void AlpacaServer::_getDescription(AsyncWebServerRequest *request){
+    respond(request, ALPACA_DESCRIPTION);
+    //_serverTCP->send(200,"text/plain", ALPACA_DESCRIPTION);
 }
 
 // Return list of dicts describing connected alpaca devices
-void AlpacaServer::_getConfiguredDevices(){
+void AlpacaServer::_getConfiguredDevices(AsyncWebServerRequest *request){
     char value[ALPACA_MAX_DEVICES*256] = "";
     char deviceinfo[256];
     strcat(value, "[");
@@ -101,35 +132,14 @@ void AlpacaServer::_getConfiguredDevices(){
             strcat(value, ","); // add comma to all but last device
     }
     strcat(value, "]");
-    respond(value);
-}
-
-void AlpacaServer::update()
-{
-    _serverTCP.handleClient();
-}
-
-// Update msg and client IDs
-void AlpacaServer::_getTransactionData()
-{
-    _clientID = 0;
-    _clientTransactionID = 0;
-    for(int i=0; i< _serverTCP.args(); i++) {
-        if (_serverTCP.argName(i).equalsIgnoreCase("clienttransactionid")) {
-            _clientTransactionID = _serverTCP.arg(i).toInt();
-        }
-        else if (_serverTCP.argName(i).equalsIgnoreCase("clientid")) {
-            _clientID = _serverTCP.arg(i).toInt();
-        }
-    }
-    _serverTransactionID++;
+    respond(request, value);
 }
 
 // return index of parameter 'name' in PUT request, return -1 if not found
-int AlpacaServer::_paramIndex(const char* name)
+int AlpacaServer::_paramIndex(AsyncWebServerRequest *request, const char* name)
 {
-    for(int i=0; i< _serverTCP.args(); i++) {
-        if (_serverTCP.argName(i).equalsIgnoreCase(name)) {
+    for(int i=0; i< request->args(); i++) {
+        if (request->argName(i).equalsIgnoreCase(name)) {
             return i;
         }
     }
@@ -137,93 +147,104 @@ int AlpacaServer::_paramIndex(const char* name)
 }
 
 // get value of parameter 'name' in PUT request and return true, return false if not found
-bool AlpacaServer::getParam(const char* name, bool &value)
+bool AlpacaServer::getParam(AsyncWebServerRequest *request, const char* name, bool &value)
 {
-    int index = _paramIndex(name);
+    int index = _paramIndex(request, name);
     if(index < 0) 
         return false;
     // both "True" and 1 should be interpreted as true.
-    value = _serverTCP.arg(index).equalsIgnoreCase("True");
-    value |= _serverTCP.arg(index).toInt() == 1;
+    value = request->arg(index).equalsIgnoreCase("True");
+    value |= request->arg(index).toInt() == 1;
     return true;
 }
 
 // get value of parameter 'name' in PUT request and return true, return false if not found
-bool AlpacaServer::getParam(const char* name, float &value)
+bool AlpacaServer::getParam(AsyncWebServerRequest *request, const char* name, float &value)
 {
-    int index = _paramIndex(name);
+    int index = _paramIndex(request, name);
     if(index < 0) 
         return false;
-    value = _serverTCP.arg(index).toFloat();
+    value = request->arg(index).toFloat();
     return true;
 }
 
 // get value of parameter 'name' in PUT request and return true, return false if not found
-bool AlpacaServer::getParam(const char* name, int &value)
+bool AlpacaServer::getParam(AsyncWebServerRequest *request, const char* name, int &value)
 {
-    int index = _paramIndex(name);
+    int index = _paramIndex(request, name);
     if(index < 0) 
         return false;
-    value = _serverTCP.arg(index).toInt();
+    value = request->arg(index).toInt();
     return true;
 }
 
 // get value of parameter 'name' in PUT request and return true, return false if not found
-bool AlpacaServer::getParam(const char* name, char *buffer, int buffer_size)
+bool AlpacaServer::getParam(AsyncWebServerRequest *request, const char* name, char *buffer, int buffer_size)
 {
-    int index = _paramIndex(name);
+    int index = _paramIndex(request, name);
     if(index < 0)
         return false;
-    _serverTCP.arg(index).toCharArray(buffer, buffer_size);
+    request->arg(index).toCharArray(buffer, buffer_size);
     return true;
 }
 
 // send response to alpaca client with bool
-void AlpacaServer::respond(bool value, int32_t error_number, const char* error_message)
+void AlpacaServer::respond(AsyncWebServerRequest *request, bool value, int32_t error_number, const char* error_message)
 {
     const char* str_val = (value?"1":"0");
-    respond(str_val, error_number, error_message);
+    respond(request, str_val, error_number, error_message);
 }
 
 // send response to alpaca client with int
-void AlpacaServer::respond(int32_t value, int32_t error_number, const char* error_message)
+void AlpacaServer::respond(AsyncWebServerRequest *request, int32_t value, int32_t error_number, const char* error_message)
 {
     char str_val[16];
     sprintf(str_val, "%i", value);
-    respond(str_val, error_number, error_message);
+    respond(request, str_val, error_number, error_message);
 }
 
 // send response to alpaca client with float
-void AlpacaServer::respond(float value, int32_t error_number, const char* error_message)
+void AlpacaServer::respond(AsyncWebServerRequest *request, float value, int32_t error_number, const char* error_message)
 {
     char str_val[16];
     sprintf(str_val, "%0.5f", value);
-    respond(str_val, error_number, error_message);
+    respond(request, str_val, error_number, error_message);
 }
 
 // send response to alpaca client with string
-void AlpacaServer::respond(const char* value, int32_t error_number, const char* error_message)
+void AlpacaServer::respond(AsyncWebServerRequest *request, const char* value, int32_t error_number, const char* error_message)
 {
     DEBUGSTREAM->print("# Alpaca (");
-    DEBUGSTREAM->print(_serverTCP.client().remoteIP());
+    DEBUGSTREAM->print(request->client()->remoteIP());
     DEBUGSTREAM->print(") ");
-    DEBUGSTREAM->println(_serverTCP.uri());
+    DEBUGSTREAM->println(request->url());
  
-    _getTransactionData();
+    //int clientID = 0;
+    int clientTransactionID = 0;
+    for(int i=0; i< request->args(); i++) {
+        if (request->argName(i).equalsIgnoreCase("clienttransactionid")) {
+            clientTransactionID = request->arg(i).toInt();
+            break;
+        }
+        //else if (request->argName(i).equalsIgnoreCase("clientid")) {
+        //    clientID = request->arg(i).toInt();
+        //}
+    }
+    _serverTransactionID++;
 
     // create msg to be sent, hope that buffer is large enough
     char response[2048];
     if( value == nullptr) {
-        sprintf(response,ALPACA_RESPOSE_ERROR, _clientTransactionID, _serverTransactionID, error_number, error_message);
+        sprintf(response,ALPACA_RESPOSE_ERROR, clientTransactionID, _serverTransactionID, error_number, error_message);
     } else {
         if ((value[0] >= '0' && value[0] <= '9') || value[0] == '[' || value[0] == '{' || value[0] == '"') {
-            sprintf(response,ALPACA_RESPOSE_VALUE_ERROR, value, _clientTransactionID, _serverTransactionID, error_number, error_message);
+            sprintf(response,ALPACA_RESPOSE_VALUE_ERROR, value, clientTransactionID, _serverTransactionID, error_number, error_message);
         } else {
-            sprintf(response,ALPACA_RESPOSE_VALUE_ERROR_STR, value, _clientTransactionID, _serverTransactionID, error_number, error_message);
+            sprintf(response,ALPACA_RESPOSE_VALUE_ERROR_STR, value, clientTransactionID, _serverTransactionID, error_number, error_message);
         }
     }
     
-    _serverTCP.send(200, ALPACA_JSON_TYPE, response);
+    request->send(200, ALPACA_JSON_TYPE, response);
     DEBUGSTREAM->println(response);
 }
 
@@ -259,4 +280,99 @@ void AlpacaServer::onAlpacaDiscovery(AsyncUDPPacket& udpPacket)
     uint8_t resp_buf[24];
     int resp_len = sprintf((char *)resp_buf, "{\"alpacaport\":%d}", _portTCP);
     _serverUDP.writeTo(resp_buf, resp_len, udpPacket.remoteIP(), udpPacket.remotePort());
+}
+
+void AlpacaServer::_getJsondata(AsyncWebServerRequest *request)
+{
+    DynamicJsonDocument doc(1024);
+    JsonObject root = doc.to<JsonObject>();
+    _writeJson(root);
+    String ser_json = "";
+    serializeJson(root, ser_json);
+    request->send(200, ALPACA_JSON_TYPE, ser_json);
+}
+
+void AlpacaServer::_getLinks(AsyncWebServerRequest *request)
+{
+    DynamicJsonDocument doc(512);
+    JsonObject root = doc.to<JsonObject>();
+    root[F("Server")] = F("/setup");
+    for(int i=0; i<_n_devices; i++) {
+        root[_device[i]->getDeviceName()] = _device[i]->getDeviceURL();
+    }
+
+    String ser_json = "";
+    serializeJson(root, ser_json);
+    request->send(200, ALPACA_JSON_TYPE, ser_json);
+}
+
+void AlpacaServer::_readJson(JsonObject &root)
+{
+    const char* name = root[F("Name")];
+    if (name)
+        strlcpy(_name, name, sizeof(_name));
+    _portTCP = root[F("TCP_port")] | _portTCP;
+    _portUDP = root[F("UDP_port")] | _portUDP;
+}
+
+void AlpacaServer::_writeJson(JsonObject &root)
+{
+    // read-only values marked with #
+    root[F("Name")] = _name;
+    root[F("UID")] = _uid;
+    root[F("TCP_port")] = _portTCP;
+    root[F("UDP_port")] = _portUDP;
+}
+
+bool AlpacaServer::saveSettings()
+{
+    DynamicJsonDocument doc(4096);
+    JsonObject root = doc.to<JsonObject>();
+    _writeJson(root);
+    for(int i=0; i<_n_devices; i++) {
+        JsonObject json_obj = root.createNestedObject(_device[i]->getDeviceUID());
+        _device[i]->aWriteJson(json_obj);
+    }
+    SPIFFS.remove(SETTINGS_FILE);
+    File file = SPIFFS.open(SETTINGS_FILE, FILE_WRITE);
+    if(!file) {
+        DEBUGSTREAM->println(F("# SPIFFS could not create settings.json"));
+        return false;
+    }
+    if(serializeJson(doc, file) == 0) {
+        DEBUGSTREAM->println(F("# ArduinoJson failed to write settings.json"));
+        file.close();
+        return false;
+    } else {
+        DEBUGSTREAM->println(F("# ArduinoJson wrote to settings.json succesfully"));
+    }
+    file.close();
+    return true;
+}
+
+bool AlpacaServer::loadSettings()
+{
+    DynamicJsonDocument doc(4096);
+    
+    File file = SPIFFS.open(SETTINGS_FILE, FILE_READ);
+    if(!file) {
+        DEBUGSTREAM->println(F("# SPIFFS could not open settings.json"));
+        return false;
+    }
+    DeserializationError error = deserializeJson(doc, file);
+    JsonObject root = doc.as<JsonObject>();
+    file.close();
+    if(error) {
+        DEBUGSTREAM->println(F("# ArduinoJson failed to parse settings.json"));
+        return false;
+    } else {
+        DEBUGSTREAM->println(F("# ArduinoJson opened settings.json succesfully"));
+    }
+    _readJson(root);
+    for(int i=0; i<_n_devices; i++) {
+        JsonObject json_obj = root[_device[i]->getDeviceUID()];
+        if(json_obj)
+            _device[i]->aReadJson(json_obj);
+    }
+    return true;
 }
