@@ -1,4 +1,4 @@
-# ESPAscomAlpacaServer
+# AlpacaServerESP32
 
 This is a library for adding Ascom Alpaca capabilites to your ESP32 arduino project. The motivation
 for making this was to have a compact, easily adaptable library for interfacing with Alpaca.
@@ -11,7 +11,7 @@ return error responses as needed.
 
 A webpage for configuring the server be found at <IP-addr>/setup , and a setup page for each connected device will be dynamically created and presented as tabs. Saving to flash memory is supported, with settings being loaded at boot. Your class should implement aReadJson and aWriteJson to load and save settings to and from the web-interface and the flash memory.
    
-<img src="https://github.com/elenhinan/ESPAscomAlpacaServer/blob/master/pics/server.png?raw=true" width="400">
+<img src="https://github.com/agnunez/AlpacaServerESP32/blob/master/pics/server.png?raw=true" width="400">
 
 For debugging set AscomServer.debug = true, after you have called Serial.begin();
 
@@ -22,7 +22,8 @@ sure to implement all pure virtual methods:
 aGet* should call _alpacaServer->respond(value, <error-code>, <error-message>)
 aGet* should call _alpacaServer->respond(nullptr, <error-code>, <error-message>) after reading parameters using _alpacaServer->getParam("<param-name>")
 
-A working dual focuser controller project can be found here:
+Working Alpaca drivers can be found here:
+https://github.com/agnunez/AlpacaSafetyMonitor
 https://github.com/elenhinan/YetAnotherFocuser
 
 Minimum setup:
