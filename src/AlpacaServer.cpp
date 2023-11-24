@@ -308,7 +308,7 @@ void AlpacaServer::_getLinks(AsyncWebServerRequest *request)
 
 void AlpacaServer::_readJson(JsonObject &root)
 {
-    const char* name = root[F("Name")];
+    const char* name = root[F("name")]; // Name
     if (name)
         strlcpy(_name, name, sizeof(_name));
     _portTCP = root[F("TCP_port")] | _portTCP;
