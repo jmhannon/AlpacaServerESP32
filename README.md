@@ -13,11 +13,11 @@ A webpage for configuring the server be found at <IP-addr>/setup , and a setup p
    
 <img src="https://github.com/agnunez/AlpacaServerESP32/blob/master/pics/server.png?raw=true" width="400">
 
-For debugging set AscomServer.debug = true, after you have called Serial.begin();
+For debugging set AlpacaServer.debug = true, after you have called Serial.begin();
 
 This repository should be linked in the specific instance of Alpaca Driver, adding un platformio.ini a line within libdevs section (See below "Minimum setup")
 
-To use, simply let your class inherit the relevant AscomDevice-derived class (e.g. AscomFocuser), and make
+To use, simply let your class inherit the relevant AlpacaDevice-derived class (e.g. AscomFocuser), and make
 sure to implement all pure virtual methods:
 aGet* should call _alpacaServer->respond(value, <error-code>, <error-message>)
 aGet* should call _alpacaServer->respond(nullptr, <error-code>, <error-message>) after reading parameters using _alpacaServer->getParam("<param-name>")

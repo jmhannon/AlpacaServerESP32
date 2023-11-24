@@ -10,8 +10,8 @@ class AlpacaDevice
         char _device_name[33] = "";
         char _device_type[17] = "";
         char _device_uid[32] = "";
-        char _device_desc[65] = "no description";
-        char _device_url[65] = "";
+        char _device_desc[65] = "Alpaca ESP32 driver";
+        char _device_url[65] = "http://github/agnunez/AlpacaServerSP32";
         char _supported_actions[512] = "[]";
         int8_t _device_number = -1;
 
