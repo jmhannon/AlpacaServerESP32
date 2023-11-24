@@ -95,7 +95,7 @@ void AlpacaDevice::aGetConnected(AsyncWebServerRequest *request){
     _alpacaServer->respond(request, "1");
 };
 void AlpacaDevice::aPutConnected(AsyncWebServerRequest *request){
-    _alpacaServer->respond(request, nullptr);
+    _alpacaServer->respond(request, nullptr, NotImplemented);  // bug
 };
 void AlpacaDevice::aGetDescription(AsyncWebServerRequest *request){
     _alpacaServer->respond(request, _device_desc);
