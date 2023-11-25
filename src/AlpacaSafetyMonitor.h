@@ -9,7 +9,7 @@ class AlpacaSafetyMonitor : public AlpacaDevice
         // alpaca commands
         void aGetInterfaceVersion(AsyncWebServerRequest *request);
         virtual void aGetIsSafe(AsyncWebServerRequest *request) = 0;
-        AlpacaSafetyMonitor() {strcpy(_device_type, "SafetyMonitor");}
+        AlpacaSafetyMonitor() {strcpy(_device_type, "safetymonitor");}
     public:
         void registerCallbacks();
 };
