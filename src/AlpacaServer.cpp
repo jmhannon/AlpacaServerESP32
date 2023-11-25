@@ -278,7 +278,7 @@ void AlpacaServer::onAlpacaDiscovery(AsyncUDPPacket& udpPacket)
 
     // reply port to ascom tcp server
     uint8_t resp_buf[24];
-    int resp_len = sprintf((char *)resp_buf, "{\"alpacaport\":%d}", _portTCP);
+    int resp_len = sprintf((char *)resp_buf, "{\"AlpacaPort\":%d}", _portTCP);
     _serverUDP.writeTo(resp_buf, resp_len, udpPacket.remoteIP(), udpPacket.remotePort());
 }
 
