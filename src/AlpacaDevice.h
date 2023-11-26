@@ -14,6 +14,7 @@ class AlpacaDevice
         char _device_url[65] = "http://github/agnunez/AlpacaServerSP32";
         char _supported_actions[512] = "[]";
         int8_t _device_number = -1;
+        bool _isconnected = false;
 
         // common functions
         virtual void _setSetupPage();
