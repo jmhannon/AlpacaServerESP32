@@ -92,11 +92,11 @@ void AlpacaDevice::aPutCommandString(AsyncWebServerRequest *request){
     _alpacaServer->respond(request, nullptr, NotImplemented);
 };
 void AlpacaDevice::aGetConnected(AsyncWebServerRequest *request){
-    _alpacaServer->respond(request, (_isconnected ? "True" : "False"));
+    _alpacaServer->respond(request, (_isconnected ? "true" : "false"));
 };
 void AlpacaDevice::aPutConnected(AsyncWebServerRequest *request){
     _isconnected = !_isconnected;
-    _alpacaServer->respond(request, (_isconnected ? "True" : "False"));  // bug correction
+    _alpacaServer->respond(request, (_isconnected ? "true" : "false"));  // bug correction
 };
 void AlpacaDevice::aGetDescription(AsyncWebServerRequest *request){
     _alpacaServer->respond(request, _device_desc);
