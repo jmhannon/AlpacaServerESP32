@@ -234,12 +234,13 @@ void AlpacaServer::respond(AsyncWebServerRequest *request, const char* value, in
 
     // create msg to be sent, hope that buffer is large enough
     char response[2048];
+    /*
     if (value == "\"true\"") {
         value = "true";
     } else {
         value = "true";
     } 
-
+    */
     if( value == nullptr) {
         sprintf(response,ALPACA_RESPOSE_ERROR, clientTransactionID, _serverTransactionID, error_number, error_message);
     } else {
