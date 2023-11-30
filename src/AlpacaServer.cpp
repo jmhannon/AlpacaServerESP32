@@ -191,7 +191,7 @@ bool AlpacaServer::getParam(AsyncWebServerRequest *request, const char* name, ch
 // send response to alpaca client with bool
 void AlpacaServer::respond(AsyncWebServerRequest *request, bool value, int32_t error_number, const char* error_message)
 {
-    const char* str_val = (value?"1":"0");
+    const char* str_val = (value?"true":"false");
     respond(request, str_val, error_number, error_message);
 }
 
@@ -234,12 +234,7 @@ void AlpacaServer::respond(AsyncWebServerRequest *request, const char* value, in
 
     // create msg to be sent, hope that buffer is large enough
     char response[2048];
-    if (value == "\"true\"") {
-        value = "true";
-    } 
-    if (value == "\"false\"") {
-        value = "false";
-    } 
+    
     if( value == nullptr) {
         sprintf(response,ALPACA_RESPOSE_ERROR, clientTransactionID, _serverTransactionID, error_number, error_message);
     } else {
