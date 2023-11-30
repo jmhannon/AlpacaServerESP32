@@ -192,12 +192,12 @@ bool AlpacaServer::getParam(AsyncWebServerRequest *request, const char* name, ch
 // send response to alpaca client with bool
 void AlpacaServer::respond(AsyncWebServerRequest *request, bool value, int32_t error_number, const char* error_message)
 {
-    Serial1.print("value: '" );
-    Serial1.print(value);
-    Serial1.print("'");
+    Serial.print("value: '" );
+    Serial.print(value);
+    Serial.print("'");
     const char* str_val = (value?"true":"false");
-    Serial1.print(" str_val: '");
-    Serial1.println(str_val);
+    Serial.print(" str_val: '");
+    Serial.println(str_val);
     respond(request, str_val, error_number, error_message);
 }
 
