@@ -192,13 +192,7 @@ bool AlpacaServer::getParam(AsyncWebServerRequest *request, const char* name, ch
 // send response to alpaca client with bool
 void AlpacaServer::respond(AsyncWebServerRequest *request, bool value, int32_t error_number, const char* error_message)
 {
-    Serial.print("value: '" );
-    Serial.print(value);
-    Serial.print("'");
-    const char* str_val = (value?"true":"false");
-    Serial.print(" str_val: '");
-    Serial.print(str_val);
-    Serial.println("'");
+    const char* str_val = (value?"true":"false");    // bug corrected. was returning string '1'/'0' instead 'true'/'false'
     respond(request, str_val, error_number, error_message);
 }
 
@@ -246,9 +240,6 @@ void AlpacaServer::respond(AsyncWebServerRequest *request, const char* value, in
         sprintf(response,ALPACA_RESPOSE_ERROR, clientTransactionID, _serverTransactionID, error_number, error_message);
     } else {
         if ((value[0] >= '0' && value[0] <= '9') || value[0] == '[' || value[0] == '{' || value[0] == '"' || strcmp(value, "true") == 0 || strcmp(value, "false") == 0) {
-            Serial.print("value !nullptr: '" );
-            Serial.print(value);
-            Serial.println("'");
             sprintf(response,ALPACA_RESPOSE_VALUE_ERROR, value, clientTransactionID, _serverTransactionID, error_number, error_message);
         } else {
             sprintf(response,ALPACA_RESPOSE_VALUE_ERROR_STR, value, clientTransactionID, _serverTransactionID, error_number, error_message);
@@ -256,9 +247,6 @@ void AlpacaServer::respond(AsyncWebServerRequest *request, const char* value, in
     }
     // #define ALPACA_RESPOSE_VALUE_ERROR     "{\n\t\"Value\": %s,\n\t\"ClientTransactionID\": %i,\n\t\"ServerTransactionID\": %i,\n\t\"ErrorNumber\": %i,\n\t\"ErrorMessage\": \"%s\"\n}"
     // #define ALPACA_RESPOSE_VALUE_ERROR_STR "{\n\t\"Value\": \"%s\",\n\t\"ClientTransactionID\": %i,\n\t\"ServerTransactionID\": %i,\n\t\"ErrorNumber\": %i,\n\t\"ErrorMessage\": \"%s\"\n}"
-    Serial.print("respose: '");
-    Serial.print(response);
-    Serial.println("'");
     request->send(200, ALPACA_JSON_TYPE, response);
     DEBUGSTREAM->println(response);
 }
