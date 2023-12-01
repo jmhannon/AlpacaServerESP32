@@ -16,6 +16,7 @@ class AlpacaObservingConditions : public AlpacaDevice
         virtual void aGetRainRate(AsyncWebServerRequest *request) = 0;
         virtual void aGetSkyBrightness(AsyncWebServerRequest *request) = 0;
         virtual void aGetSkyTemperature(AsyncWebServerRequest *request) = 0;
+        virtual void aGetSkyQuality(AsyncWebServerRequest *request) = 0;
         virtual void aGetStarFwhm(AsyncWebServerRequest *request) = 0;      
         virtual void aGetTemperature(AsyncWebServerRequest *request) = 0;
         virtual void aGetWindDirection(AsyncWebServerRequest *request) = 0;

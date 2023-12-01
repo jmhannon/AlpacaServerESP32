@@ -10,6 +10,7 @@ void AlpacaObservingConditions::registerCallbacks()
     this->createCallBack(LHF(aGetPressure), HTTP_GET, "pressure");
     this->createCallBack(LHF(aGetRainRate), HTTP_GET, "rainrate");
     this->createCallBack(LHF(aGetSkyBrightness), HTTP_GET, "skybrightness");
+    this->createCallBack(LHF(aGetSkyQuality), HTTP_GET, "skyquality");
     this->createCallBack(LHF(aGetSkyTemperature), HTTP_GET, "skytemperature");
     this->createCallBack(LHF(aGetStarFwhm), HTTP_GET, "starfwhm");
     this->createCallBack(LHF(aGetTemperature), HTTP_GET, "temperature");
