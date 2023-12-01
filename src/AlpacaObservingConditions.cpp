@@ -19,6 +19,7 @@ void AlpacaObservingConditions::registerCallbacks()
     this->createCallBack(LHF(aPutRefresh), HTTP_PUT, "refresh");
     this->createCallBack(LHF(aGetSensorDescription), HTTP_GET, "sensordescription");
     this->createCallBack(LHF(aGetTimeSinceLastUpdate), HTTP_GET, "timesincelastupdate");
+    this->createCallBack(LHF(aGetCloudCover), HTTP_GET, "cloudcover");
 }       
 
 void AlpacaObservingConditions::aGetInterfaceVersion(AsyncWebServerRequest *request) {

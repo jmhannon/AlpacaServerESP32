@@ -24,6 +24,7 @@ class AlpacaObservingConditions : public AlpacaDevice
         virtual void aPutRefresh(AsyncWebServerRequest *request) = 0;
         virtual void aGetSensorDescription(AsyncWebServerRequest *request) = 0;
         virtual void aGetTimeSinceLastUpdate(AsyncWebServerRequest *request) = 0;
+        virtual void aGetCloudCover(AsyncWebServerRequest *request) = 0;        
         AlpacaObservingConditions() {strcpy(_device_type, "observingconditions");}
     public:
         void registerCallbacks();
