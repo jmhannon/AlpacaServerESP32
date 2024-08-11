@@ -4,7 +4,7 @@ This is a library for adding Ascom Alpaca capabilites to your ESP32 arduino proj
 for making this was to have a compact, easily adaptable library for interfacing with Alpaca.
 
 Auto discovery by Ascom is working, and more than one device can be connected to the server.
-As of now, only focuser is implemented, but adding other classes is very simple and I'll do so in the future.
+As of now, focuser, cover/calibrator, observing conditions, safety monitor, dome and switch are implemented, but adding other classes is very simple and I'll do so in the future.
 
 Be sure to check out Ascom API documentation to be sure you handle values and parameters correctly, and
 return error responses as needed.
@@ -31,7 +31,7 @@ Minimum setup:
 **platform.io**
 ```
 lib_deps=
-   https://github.com/agnunez/AlpacaServerESP32.git
+   https://github.com/agnunez/AlpacaServerESP32.git // correct this
 ```
 
 **myFocuser.h**
